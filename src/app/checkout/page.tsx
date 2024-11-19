@@ -2,16 +2,24 @@
 import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from 'react'
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
 
 export default function CheckoutPage() {
-  const searchParams = useSearchParams();
-  const clientSecret = searchParams.get("clientSecret");
+ 
   const [status, setStatus] = useState("loading");
+  const [clientSecret, setClientSecret] = useState("");
+  const searchParams = useSearchParams();
 
+  useEffect(() => {     
+    const clientSecret = searchParams.get("clientSecret");
+    setClientSecret(clientSecret || "");
+  }, [searchParams]);
+
+ 
   useEffect(() => {
     if (!clientSecret) return;
 
@@ -47,11 +55,14 @@ export default function CheckoutPage() {
     handlePayment();
   }, [clientSecret]);
 
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24">
-      {status === "loading" && <p>Procesando pago...</p>}
-      {status === "success" && <p>¡Pago completado con éxito!</p>}
-      {status === "error" && <p>Error al procesar el pago</p>}
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="flex min-h-screen flex-col items-center justify-center p-24">
+        {status === "loading" && <p>Procesando pago...</p>}
+        {status === "success" && <p>¡Pago completado con éxito!</p>}
+        {status === "error" && <p>Error al procesar el pago</p>}
+      </div>
+    </Suspense>
   );
 }
